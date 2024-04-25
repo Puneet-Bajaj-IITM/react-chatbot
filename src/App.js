@@ -1,13 +1,32 @@
+import React, { useState } from 'react';
 import './App.css';
-import ChatBot from 'react-simple-chatbot'
+import ChatBot from 'react-simple-chatbot';
+import axios from 'axios'; // Import axios for making HTTP requests
 
 function App() {
+  const [chatHistory, setChatHistory] = useState([]);
+
+  const handleUserMessage = async (event) => {
+    const userInput = event.message;
+
+    // Make a POST request to your Python server
+    try {
+      const response = await axios.post('https://localhost:3000/query', { query: userInput }); // Specify the full URL including the port
+
+      // Update chat history with the received response
+      const updatedHistory = [...chatHistory, { user: userInput, bot: response.data.response }];
+      setChatHistory(updatedHistory);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <ChatBot
         steps={[
           {
             id: '1',
-            message: 'What is your name?',
+            message: 'What is your query?',
             trigger: '2',
           },
           {
@@ -17,32 +36,12 @@ function App() {
           },
           {
             id: '3',
-            message: 'Hi {previousValue}, nice to meet you!',
-            trigger: '4',
+            message : () => {
+              handleUserMessage('{previousValue}')
+            },
+            trigger: '2'
           },
-          {
-            id: '4',
-            message: 'What number I am thinking?',
-            trigger: '5',
-          },
-          {
-            id: '5',
-            options: [
-              { value: 1, label: 'Number 1', trigger: '7' },
-              { value: 2, label: 'Number 2', trigger: '6' },
-              { value: 3, label: 'Number 3', trigger: '6' },
-            ],
-          },
-          {
-            id: '6',
-            message: 'Wrong answer, try again.',
-            trigger: '5',
-          },
-          {
-            id: '7',
-            message: 'Awesome! You are a telepath!',
-            end: true,
-          },
+          
         ]}
         floating={true}
       />
